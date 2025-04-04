@@ -4,10 +4,7 @@
 import customtkinter as ctk
 import tkinter.messagebox as tkmb
 from datetime import datetime
-import smtplib
-import random
-import time 
-import requests
+import time
 
 # Handle login function
 def handle_login(username, password):
@@ -16,7 +13,7 @@ def handle_login(username, password):
     login_time = datetime.now()
 
     # Define usual login hours
-    usual_login_start = login_time.replace(hour=20, minute=0, second=0)
+    usual_login_start = login_time.replace(hour=16, minute=0, second=0)
     usual_login_end = login_time.replace(hour=23, minute=0, second=0)
 
     # Validate username and password
@@ -45,7 +42,7 @@ class LoginApp:
         self.root = root
         self.failed_attempts = 0
         self.security_answer = "red"  # Example security answer
-        self.security_trigger_times = []  # List to store the security question trigger times
+        self.security_triggered = False  # To track if security question has been triggered
         self.setup_ui()
 
     def setup_ui(self):
@@ -92,18 +89,20 @@ class LoginApp:
 
         # Process login result
         if login_result == "security_question":
-            security_trigger_time = time.time()  # Capture time when the security question is triggered
-            self.security_trigger_times.append(security_trigger_time)
-            print(f"Timestamp when security question is triggered: {security_trigger_time:.4f}")
-            print(f"Time taken to trigger security question: {security_trigger_time - self.login_attempt_time:.4f} seconds\n")
             self.security_question()  # Trigger security question if login is outside usual hours
         elif login_result == "success":
             self.open_new_window()  # Open new window after successful login
         else:
             self.failed_attempts += 1
             tkmb.showerror("Login Failed", "Incorrect Username or Password")
-            if self.failed_attempts == 3:
+            if self.failed_attempts == 3 and not self.security_triggered:
+                # Trigger security question after 3 failed attempts
+                self.security_trigger_time = time.time()
+                print(f"Timestamp when security question is triggered after 3 failed attempts: {self.security_trigger_time:.4f}")
+                print(f"Time taken to trigger security question: {self.security_trigger_time - self.login_attempt_time:.4f} seconds\n")
+                
                 tkmb.showwarning("Security Alert; Possible Breach", "Multiple Failed Login Attempts")
+                self.security_triggered = True  # Set flag to true to prevent triggering multiple times
                 self.security_question()
 
     def open_new_window(self):
@@ -124,7 +123,7 @@ class LoginApp:
         close_button.pack(pady=20)
 
     def security_question(self):
-        # Ask a security question if login attempt is made outside usual hours
+        # Ask a security question if login attempt is made outside usual hours or after 3 failed attempts
         self.security_window = ctk.CTkToplevel(self.root)
         self.security_window.geometry("400x200")
         self.security_window.title("Security Question")
