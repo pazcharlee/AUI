@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
 import customtkinter as ctk
 import tkinter.messagebox as tkmb
 from datetime import datetime
@@ -17,8 +16,8 @@ def handle_login(username, password):
     login_time = datetime.now()
 
     # Define usual login hours
-    usual_login_start = login_time.replace(hour=13, minute=0, second=0)
-    usual_login_end = login_time.replace(hour=14, minute=0, second=0)
+    usual_login_start = login_time.replace(hour=20, minute=0, second=0)
+    usual_login_end = login_time.replace(hour=23, minute=0, second=0)
 
     # Validate username and password
     if username == correct_username and password == correct_password:
@@ -46,6 +45,7 @@ class LoginApp:
         self.root = root
         self.failed_attempts = 0
         self.security_answer = "red"  # Example security answer
+        self.security_trigger_times = []  # List to store the security question trigger times
         self.setup_ui()
 
     def setup_ui(self):
@@ -82,6 +82,9 @@ class LoginApp:
         self.forgot_pass_button.pack(pady=5, padx=20)
 
     def handle_login(self):
+        self.login_attempt_time = time.time()  # Capture the timestamp when login starts 
+        print(f"Timestamp of Started Login: {self.login_attempt_time:.4f}")
+
         username = self.user_entry.get()  # Get username from the input field
         password = self.user_pass.get()  # Get password from the input field
 
@@ -89,6 +92,10 @@ class LoginApp:
 
         # Process login result
         if login_result == "security_question":
+            security_trigger_time = time.time()  # Capture time when the security question is triggered
+            self.security_trigger_times.append(security_trigger_time)
+            print(f"Timestamp when security question is triggered: {security_trigger_time:.4f}")
+            print(f"Time taken to trigger security question: {security_trigger_time - self.login_attempt_time:.4f} seconds\n")
             self.security_question()  # Trigger security question if login is outside usual hours
         elif login_result == "success":
             self.open_new_window()  # Open new window after successful login
@@ -101,6 +108,9 @@ class LoginApp:
 
     def open_new_window(self):
         # Create a new window after successful login
+        time_login_completes = time.time()
+        print(f"Time Login Completes: {time_login_completes}")
+        print(f"Time Taken for Successful Login: {time_login_completes - self.login_attempt_time: .4f} seconds")
         new_window = ctk.CTkToplevel(self.root)  # Create a new top-level window
         new_window.geometry("400x300")
         new_window.title("Welcome to Budgetly")
@@ -108,7 +118,7 @@ class LoginApp:
         # Add a label to the new window
         label = ctk.CTkLabel(master=new_window, text="Welcome to Budgetly!", font=("Times New Roman", 20))
         label.pack(pady=40)
-
+        
         # Add a button to close the new window
         close_button = ctk.CTkButton(master=new_window, text="Close", width=200, command=new_window.destroy)
         close_button.pack(pady=20)
